@@ -15,37 +15,43 @@ def xor_two_str(a: str, b: str) -> str:
 
 def reconstruction(disks_index: int) -> None:
     global disks_indexes
+    global RAID_5_1
+    global RAID_5_2
+
+
+
+    if(disks_index < 3):
+        problematische_Raid = RAID_5_1
+        problematische_index = disks_index
+    else:
+        problematische_Raid = RAID_5_2
+        problematische_index = disks_index - 3
+
+
     lost_data = []
     list_of_data = []
-    for i in range(len(disks)):
-        if i != disks_index:
-            file = open(disks[i], 'r')
+    for i in range(len(problematische_Raid)):
+        if i != problematische_index:
+            file = open(problematische_Raid[i], 'r')
             list_of_data += [file.readlines()]
             file.close()
+        else:
+            list_of_data += ["*" * (len(disks_indexes) - 1)]
+
+
 
     for i in range(len(list_of_data[0])):
-        tmp_set_for_data = set()
-        tmp_list_for_data = []
+        small_list_of_data = []
         for j in range(len(list_of_data)):
-            tmp_set_for_data.add(list_of_data[j][i])
-            tmp_list_for_data.append(list_of_data[j][i])
-        if len(tmp_set_for_data) == 4:
-            tmp_list_for_data.clear()
-            tmp_list_for_data = [x[:-1:] for x in tmp_set_for_data]
-            lost_data.append(
-                xor_two_str(
-                    xor_two_str(xor_two_str(tmp_list_for_data[0], tmp_list_for_data[1]), tmp_list_for_data[2]),
-                    tmp_list_for_data[3])[2::]
-            )
-        elif len(tmp_set_for_data) == 5:
-            tmp_list_for_data.insert(disks_index, '*')
-            try:
-                lost_data.append(tmp_list_for_data[disks_index + 3][:-1:])
-            except:
-                lost_data.append(tmp_list_for_data[disks_index - 3][:-1:])
+            small_list_of_data.append(list_of_data[j][i])
+
+        indexes = [x for x in range(len(small_list_of_data)) if small_list_of_data[x] != '*']
+
+        lost_data.append(xor_two_str(small_list_of_data[indexes[0]][:-1:], small_list_of_data[indexes[1]][:-1:])[2::])
+
 
     for i in range(len(lost_data)):
-        while (len(lost_data[i]) < 4):
+        while (len(lost_data[i]) < 3):
             lost_data[i] = '0' + lost_data[i]
 
     with open(disks[disks_index], 'w') as file:
@@ -64,12 +70,18 @@ def check_disks() -> None:
 
 
 def read() -> None:
-    check_disks()
     global disks_indexes
+    if (len(disks_indexes) == 1):
+        print('Disks are empty.')
+        return
+    else:
+        print('Array size is {}'.format(disks_indexes[-1] + 1))
     check_disks()
     while (True):
-        input_data = input("Enter the index of the line you want to read: ")
-        if int(input_data) > disks_indexes[-1]:
+        input_data = input("Enter the index of the line you want to read or enter \"-1\" to leave: ")
+        if int(input_data) == -1:
+            return
+        elif int(input_data) > disks_indexes[-1]:
             print("Wrong index.")
         else:
             break
@@ -84,9 +96,18 @@ def read() -> None:
     res = ''
     for i in range(len(list_of_data)):
         if (int(input_data) % 3) != i and (int(input_data) % 3) + 3 != i:
-            while (list_of_data[i][int(input_data)][0] == '0'):
-                list_of_data[i][int(input_data)] = list_of_data[i][int(input_data)][1::]
-            res += list_of_data[i][int(input_data)][:-1]
+            if(list_of_data[i][int(input_data)] == ""):
+                res += "0000"
+            else:
+                list_of_data[i][int(input_data)] = list_of_data[i][int(input_data)][:-1]
+                if len(res) == 0 or len(res) == 7:
+                    while(len(list_of_data[i][int(input_data)]) < 4):
+                        list_of_data[i][int(input_data)] = "0" + list_of_data[i][int(input_data)]
+                    res += list_of_data[i][int(input_data)]
+                else:
+                    while (len(list_of_data[i][int(input_data)]) < 3):
+                        list_of_data[i][int(input_data)] = "0" + list_of_data[i][int(input_data)]
+                    res += list_of_data[i][int(input_data)]
 
     print("Data on the address {}:".format(input_data))
     print(res)
@@ -94,37 +115,41 @@ def read() -> None:
 
 def write() -> None:
     check_disks()
-    if (len(disks_indexes) == 1):
-        print('Disks are empty.')
+    if (disks_indexes[-1] == 63):
+        print('Disks are full.')
+        return
+
+
     while (True):
         input_data = str(input("Enter the string: "))
-        if len(input_data) > 14:
-            print("The length of the string is limited to 14 bytes.")
+        if len(input_data) != 14:
+            print("String length is not equal to 14 bytes.")
         else:
             break
     blocks = [input_data[:4], input_data[4:7], input_data[7:11], input_data[11:14]]
     for i in range(len(blocks)):
-        while (len(blocks[i]) < 4):
+        while (len(blocks[i]) < 3):
             blocks[i] = '0' + blocks[i]
 
-    excess_data = xor_two_str(xor_two_str(blocks[0], blocks[1]), xor_two_str(blocks[2], blocks[3]))[2::]
+    excess_data1 = xor_two_str(blocks[0], blocks[1])[2::]
+    excess_data2 = xor_two_str(blocks[2], blocks[3])[2::]
+
 
     disks_indexes.append(disks_indexes[-1] + 1)
-    while (len(excess_data) < 4):
-        excess_data = '0' + excess_data
+
 
     l1 = ['', '', '']
     l2 = ['', '', '']
 
-    l1[disks_indexes[-1] % 3] = excess_data
-    l2[disks_indexes[-1] % 3] = excess_data
-    for i in range(len(l1)):
-        if l1[i] == '' and blocks[0] not in l1:
-            l1[i] = blocks[0]
-            l2[i] = blocks[2]
-        elif l1[i] == '':
-            l1[i] = blocks[1]
-            l2[i] = blocks[3]
+    l1[disks_indexes[-1] % 3] = excess_data1
+    l2[disks_indexes[-1] % 3] = excess_data2
+    indexes = [x for x in range(len(l1)) if x != disks_indexes[-1] % 3]
+
+    l1[indexes[0]] = blocks[0]
+    l2[indexes[0]] = blocks[2]
+
+    l1[indexes[1]] = blocks[1]
+    l2[indexes[1]] = blocks[3]
 
     for i in range(len(RAID_5_1)):
         file_1 = open(RAID_5_1[i], 'a')
@@ -135,7 +160,7 @@ def write() -> None:
 
         file_1.close()
         file_2.close()
-    print('The data was recorded.')
+    print('The data were recorded with an index of {}.'.format(disks_indexes[-1]))
 
 
 if __name__ == '__main__':
@@ -156,3 +181,5 @@ if __name__ == '__main__':
             break
         else:
             print("Wrong command.")
+
+
