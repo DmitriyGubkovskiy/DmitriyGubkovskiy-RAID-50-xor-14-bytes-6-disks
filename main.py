@@ -121,7 +121,7 @@ def write() -> None:
 
     while (True):
         input_index = int(input("Enter index to write: "))
-        if input_index > 63:
+        if input_index > 63 or input_index < 0:
             print("Out of addressing limits .")
         else:
             break
@@ -169,6 +169,7 @@ def write() -> None:
 
     for i in range(len(RAID_5_1)):
         data_for_write[i][input_index] = l1[i] + '\n'
+
         data_for_write[i+3][input_index] = l2[i] + '\n'
 
 
@@ -185,15 +186,11 @@ def write() -> None:
 def fillng() -> None:
     global disks_indexes
     for x in disks:
-        file = open(x, "r")
-        if len(file.readlines()) == 0:
-            file.close()
-            file = open(x, "a")
-            for i in range(64):
-                file.write("_" + '\n')
-            file.close()
-        else:
-            return
+        file = open(x, "w")
+        for i in range(64):
+            file.write("_" + '\n')
+        file.close()
+
 
 
 if __name__ == '__main__':
