@@ -77,17 +77,20 @@ def read() -> None:
         return
 
     check_disks()
+    check_disks()
     while (True):
         input_data = input("Enter the index of the line you want to read or enter \"-1\" to leave: ")
-        if int(input_data) == -1:
-            return
-        elif int(input_data) > 63:
+        try:
+            if int(input_data) == -1:
+                return
+            elif int(input_data) > 63:
+                print("Wrong index.")
+            elif int(input_data) not in disks_indexes:
+                print("No data is available for this address.")
+            else:
+                break
+        except:
             print("Wrong index.")
-        elif int(input_data) not in disks_indexes:
-            print("No data is available for this address.")
-        else:
-            break
-
     list_of_data = []
 
     for i in range(len(disks)):
@@ -117,14 +120,19 @@ def read() -> None:
 
 def write() -> None:
     check_disks()
+    check_disks()
     global disks_indexes
 
     while (True):
-        input_index = int(input("Enter index to write: "))
-        if input_index > 63 or input_index < 0:
-            print("Out of addressing limits .")
-        else:
-            break
+        input_index = input("Enter index to write: ")
+        try:
+            if int(input_index) > 63 or int(input_index) < 0:
+                print("Out of addressing limits .")
+            else:
+                break
+        except:
+            print("Wrong index.")
+
 
     while (True):
         input_data = str(input("Enter the string: "))
@@ -143,14 +151,14 @@ def write() -> None:
     excess_data1 = xor_two_str(blocks[0], blocks[1])[2::]
     excess_data2 = xor_two_str(blocks[2], blocks[3])[2::]
 
-    disks_indexes.append(input_index)
+    disks_indexes.append(int(input_index))
     disks_indexes = list(set(disks_indexes))
     l1 = ['', '', '']
     l2 = ['', '', '']
 
-    l1[input_index % 3] = excess_data1
-    l2[input_index % 3] = excess_data2
-    indexes = [x for x in range(len(l1)) if x != input_index % 3]
+    l1[int(input_index) % 3] = excess_data1
+    l2[int(input_index) % 3] = excess_data2
+    indexes = [x for x in range(len(l1)) if x != int(input_index) % 3]
 
     l1[indexes[0]] = blocks[0]
     l2[indexes[0]] = blocks[2]
@@ -168,9 +176,9 @@ def write() -> None:
 
 
     for i in range(len(RAID_5_1)):
-        data_for_write[i][input_index] = l1[i] + '\n'
+        data_for_write[i][int(input_index)] = l1[i] + '\n'
 
-        data_for_write[i+3][input_index] = l2[i] + '\n'
+        data_for_write[i+3][int(input_index)] = l2[i] + '\n'
 
 
     for i in range(len(disks)):
@@ -185,6 +193,7 @@ def write() -> None:
 
 def fillng() -> None:
     global disks_indexes
+
     for x in disks:
         file = open(x, "w")
         for i in range(64):
